@@ -1,0 +1,112 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace BibliotecaApp
+{
+    public partial class Form1 : Form
+    {
+        string connStr = "Server=L214_PC13;Database=BibliotecaDB;Trusted_Connection=True;";
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            LoadAutori();
+        }
+
+        // READ
+        private void LoadAutori()
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlDataAdapter da = new SqlDataAdapter("sp_GetAutori", conn);
+                da.SelectCommand.CommandType = CommandType.StoredProcedure;
+
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+        }
+
+        // CREATE
+        private void btnInsert_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlCommand cmd = new SqlCommand("sp_InsertAutor", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@nume", txtNume.Text);
+                cmd.Parameters.AddWithValue("@prenume", txtPrenume.Text);
+                cmd.Parameters.AddWithValue("@tara", txtTara.Text);
+                cmd.Parameters.AddWithValue("@data_nasterii", dtpData.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            MessageBox.Show("Autor adăugat!");
+            LoadAutori();
+        }
+
+        // UPDATE
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlCommand cmd = new SqlCommand("sp_UpdateAutor", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@id_autor", txtId.Text);
+                cmd.Parameters.AddWithValue("@nume", txtNume.Text);
+                cmd.Parameters.AddWithValue("@prenume", txtPrenume.Text);
+                cmd.Parameters.AddWithValue("@tara", txtTara.Text);
+                cmd.Parameters.AddWithValue("@data_nasterii", dtpData.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            MessageBox.Show("Autor actualizat!");
+            LoadAutori();
+        }
+
+        // DELETE
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlCommand cmd = new SqlCommand("sp_DeleteAutor", conn);
+                cmd.CommandType = CommandType.StoredProcedure;
+
+                cmd.Parameters.AddWithValue("@id_autor", txtId.Text);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            MessageBox.Show("Autor șters!");
+            LoadAutori();
+        }
+
+        // Click pe tabel -> populatează câmpurile
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+
+                txtId.Text = row.Cells["id_autor"].Value.ToString();
+                txtNume.Text = row.Cells["nume"].Value.ToString();
+                txtPrenume.Text = row.Cells["prenume"].Value.ToString();
+                txtTara.Text = row.Cells["tara"].Value.ToString();
+                dtpData.Value = Convert.ToDateTime(row.Cells["data_nasterii"].Value);
+            }
+        }
+    }
+}
