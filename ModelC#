@@ -1,0 +1,70 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace BibliotecaApp
+{
+    public partial class Form1 : Form
+    {
+        // Conexiunea la SQL Server
+        private string connectionString = "Server=L214_PC13;Database=BibliotecaDB;Trusted_Connection=True;";
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        // Afișează toți autorii
+        private void btnAfisAutori_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = "SELECT * FROM Autor";
+                SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+        }
+
+        // Afișează toate cărțile cu detalii autor și editură
+        private void btnAfisCarti_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                string query = @"SELECT C.titlu, A.nume + ' ' + A.prenume AS Autor, E.denumire AS Editura, C.pret
+                                 FROM Carte C
+                                 JOIN Autor A ON C.id_autor = A.id_autor
+                                 JOIN Editura E ON C.id_editura = E.id_editura";
+                SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+        }
+
+        // Insert autor folosind procedura stocată
+        private void btnInsertAutor_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_AdaugaAutor", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@nume", txtNumeAutor.Text);
+                    cmd.Parameters.AddWithValue("@prenume", txtPrenumeAutor.Text);
+                    cmd.Parameters.AddWithValue("@tara", txtTaraAutor.Text);
+                    cmd.Parameters.AddWithValue("@data_nasterii", dtpDataNasterii.Value.Date);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                    conn.Close();
+                }
+            }
+
+            MessageBox.Show("Autor adăugat cu succes!");
+            btnAfisAutori_Click(sender, e); // Reîncarcă lista
+        }
+    }
+}
