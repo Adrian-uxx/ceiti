@@ -1,0 +1,120 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace BibliotecaCRUD
+{
+    public partial class Form1 : Form
+    {
+        string connStr = "Server=.;Database=BibliotecaDB;Trusted_Connection=True;";
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        // READ
+        private void LoadData()
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM Autor", conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+        }
+
+        private void btnLoad_Click(object sender, EventArgs e)
+        {
+            LoadData();
+        }
+
+        // CREATE
+        private void btnInsert_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"INSERT INTO Autor
+                VALUES ((SELECT ISNULL(MAX(id_autor),0)+1 FROM Autor),
+                        @nume,@prenume,@tara,@data)";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@nume", txtNume.Text);
+                cmd.Parameters.AddWithValue("@prenume", txtPrenume.Text);
+                cmd.Parameters.AddWithValue("@tara", txtTara.Text);
+                cmd.Parameters.AddWithValue("@data", dtpData.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            LoadData();
+        }
+
+        // UPDATE
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = @"UPDATE Autor SET
+                                nume=@nume,
+                                prenume=@prenume,
+                                tara=@tara,
+                                data_nasterii=@data
+                                WHERE id_autor=@id";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", txtId.Text);
+                cmd.Parameters.AddWithValue("@nume", txtNume.Text);
+                cmd.Parameters.AddWithValue("@prenume", txtPrenume.Text);
+                cmd.Parameters.AddWithValue("@tara", txtTara.Text);
+                cmd.Parameters.AddWithValue("@data", dtpData.Value);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            LoadData();
+        }
+
+        // DELETE
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string query = "DELETE FROM Autor WHERE id_autor=@id";
+
+                SqlCommand cmd = new SqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", txtId.Text);
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            LoadData();
+        }
+
+        // Selectare din tabel
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            txtId.Text = dataGridView1.CurrentRow.Cells["id_autor"].Value.ToString();
+            txtNume.Text = dataGridView1.CurrentRow.Cells["nume"].Value.ToString();
+            txtPrenume.Text = dataGridView1.CurrentRow.Cells["prenume"].Value.ToString();
+            txtTara.Text = dataGridView1.CurrentRow.Cells["tara"].Value.ToString();
+            dtpData.Value = Convert.ToDateTime(dataGridView1.CurrentRow.Cells["data_nasterii"].Value);
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                SqlDataAdapter da = new SqlDataAdapter("SELECT * FROM Editura", conn);
+                DataTable dt = new DataTable();
+                da.Fill(dt);
+                dataGridView1.DataSource = dt;
+            }
+        }
+    }
+}
