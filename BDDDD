@@ -1,0 +1,338 @@
+CREATE DATABASE BibliotecaDB;
+GO
+
+USE BibliotecaDB;
+GO
+
+
+
+
+-- Tabela Autor
+CREATE TABLE Autor (
+    id_autor INT PRIMARY KEY,  -- cheia primara generata prin functie
+    nume NVARCHAR(50) NOT NULL,
+    prenume NVARCHAR(50) NOT NULL,
+    tara NVARCHAR(50),
+    data_nasterii DATE
+);
+GO
+
+
+-- Tabela Editura
+CREATE TABLE Editura (
+    id_editura INT PRIMARY KEY,
+    denumire NVARCHAR(100) NOT NULL,
+    tara NVARCHAR(50),
+    adresa NVARCHAR(200),
+    telefon NVARCHAR(15)
+);
+GO
+
+
+-- Tabela Cititor
+CREATE TABLE Cititor (
+    id_cititor INT PRIMARY KEY,
+    nume_cititor NVARCHAR(50) NOT NULL,
+    prenume NVARCHAR(50) NOT NULL,
+    adresa NVARCHAR(200),
+    telefon NVARCHAR(15),
+    email NVARCHAR(100) UNIQUE
+);
+GO
+
+
+-- Tabela Carte
+CREATE TABLE Carte (
+    id_carte INT PRIMARY KEY,
+    titlu NVARCHAR(100) NOT NULL,
+    gen NVARCHAR(30),
+    an_publicare INT,
+    pret DECIMAL(10,2),
+    id_autor INT,
+    id_editura INT,
+
+    FOREIGN KEY (id_autor) REFERENCES Autor(id_autor),
+    FOREIGN KEY (id_editura) REFERENCES Editura(id_editura)
+);
+GO
+
+
+-- Tabela Imprumut
+CREATE TABLE Imprumut (
+    id_imprumut INT PRIMARY KEY,
+    id_carte INT,
+    id_cititor INT,
+    data_imprumut DATE NOT NULL,
+    data_returnare DATE,
+
+    FOREIGN KEY (id_carte) REFERENCES Carte(id_carte),
+    FOREIGN KEY (id_cititor) REFERENCES Cititor(id_cititor)
+);
+GO
+
+
+
+-- 3. FUNCTII UTILIZATOR PENTRU GENERARE CHEI PRIMARE
+
+-- Functie generare ID Autor
+CREATE FUNCTION fn_GenerareIdAutor()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT ISNULL(MAX(id_autor),0) + 1 FROM Autor);
+END;
+GO
+
+-- Functie generare ID Editura
+CREATE FUNCTION fn_GenerareIdEditura()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT ISNULL(MAX(id_editura),0) + 1 FROM Editura);
+END;
+GO
+
+-- Functie generare ID Cititor
+CREATE FUNCTION fn_GenerareIdCititor()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT ISNULL(MAX(id_cititor),0) + 1 FROM Cititor);
+END;
+GO
+
+-- Functie generare ID Carte
+CREATE FUNCTION fn_GenerareIdCarte()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT ISNULL(MAX(id_carte),0) + 1 FROM Carte);
+END;
+GO
+
+-- Functie generare ID Imprumut
+CREATE FUNCTION fn_GenerareIdImprumut()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT ISNULL(MAX(id_imprumut),0) + 1 FROM Imprumut);
+END;
+GO
+
+
+-- 4. PROCEDURI STOCATE PENTRU INTRODUCERE DATE
+
+
+-- Procedura Autor
+CREATE PROCEDURE sp_AdaugaAutor
+    @nume NVARCHAR(50),
+    @prenume NVARCHAR(50),
+    @tara NVARCHAR(50),
+    @data_nasterii DATE
+AS
+BEGIN
+    INSERT INTO Autor
+    VALUES (dbo.fn_GenerareIdAutor(), @nume, @prenume, @tara, @data_nasterii);
+END;
+GO
+
+
+-- Procedura Editura
+CREATE PROCEDURE sp_AdaugaEditura
+    @denumire NVARCHAR(100),
+    @tara NVARCHAR(50),
+    @adresa NVARCHAR(200),
+    @telefon NVARCHAR(15)
+AS
+BEGIN
+    INSERT INTO Editura
+    VALUES (dbo.fn_GenerareIdEditura(), @denumire, @tara, @adresa, @telefon);
+END;
+GO
+
+
+-- Procedura Cititor
+CREATE PROCEDURE sp_AdaugaCititor
+    @nume NVARCHAR(50),
+    @prenume NVARCHAR(50),
+    @adresa NVARCHAR(200),
+    @telefon NVARCHAR(15),
+    @email NVARCHAR(100)
+AS
+BEGIN
+    INSERT INTO Cititor
+    VALUES (dbo.fn_GenerareIdCititor(), @nume, @prenume, @adresa, @telefon, @email);
+END;
+GO
+
+
+-- Procedura Carte
+CREATE PROCEDURE sp_AdaugaCarte
+    @titlu NVARCHAR(100),
+    @gen NVARCHAR(30),
+    @an_publicare INT,
+    @pret DECIMAL(10,2),
+    @id_autor INT,
+    @id_editura INT
+AS
+BEGIN
+    INSERT INTO Carte
+    VALUES (dbo.fn_GenerareIdCarte(), @titlu, @gen, @an_publicare, @pret, @id_autor, @id_editura);
+END;
+GO
+
+
+-- Procedura Imprumut
+CREATE PROCEDURE sp_AdaugaImprumut
+    @id_carte INT,
+    @id_cititor INT,
+    @data_imprumut DATE,
+    @data_returnare DATE
+AS
+BEGIN
+    INSERT INTO Imprumut
+    VALUES (dbo.fn_GenerareIdImprumut(), @id_carte, @id_cititor, @data_imprumut, @data_returnare);
+END;
+GO
+
+
+-- 5. INTRODUCERE DATE PRIN PROCEDURI
+-- Autori
+	EXEC sp_AdaugaAutor 'Eminescu','Mihai','Romania','1850-01-15';
+	EXEC sp_AdaugaAutor 'Rowling','J.K.','UK','1965-07-31';
+	EXEC sp_AdaugaAutor 'Orwell','George','UK','1903-06-25';
+	EXEC sp_AdaugaAutor 'Hugo','Victor','Franta','1802-02-26';
+	EXEC sp_AdaugaAutor 'Dostoevski','Fiodor','Rusia','1821-11-11';
+
+Select * from Autor;
+-- Edituri
+EXEC sp_AdaugaEditura 'Humanitas','Romania','Bucuresti','0211234567';
+EXEC sp_AdaugaEditura 'Penguin','UK','London','0044123456';
+EXEC sp_AdaugaEditura 'Gallimard','Franta','Paris','0033123456';
+EXEC sp_AdaugaEditura 'Litera','Moldova','Chisinau','022987654';
+EXEC sp_AdaugaEditura 'Vintage','SUA','New York','0012123456';
+
+Select * from Editura;
+-- Cititori
+EXEC sp_AdaugaCititor 'Popescu','Ion','Chisinau','069111111','ion@mail.com';
+EXEC sp_AdaugaCititor 'Ionescu','Maria','Balti','068222222','maria@mail.com';
+EXEC sp_AdaugaCititor 'Smith','John','London','071333333','john@mail.com';
+EXEC sp_AdaugaCititor 'Martin','Claire','Paris','061444444','claire@mail.com';
+EXEC sp_AdaugaCititor 'Ivanov','Alexei','Moscova','079555555','alexei@mail.com';
+
+Select * from Cititor;
+-- Carti
+EXEC sp_AdaugaCarte 'Luceafarul','Poezie',1883,45.50,1,1;
+EXEC sp_AdaugaCarte 'Harry Potter','Fantasy',1997,120.00,2,2;
+EXEC sp_AdaugaCarte '1984','Distopie',1949,85.00,3,5;
+EXEC sp_AdaugaCarte 'Mizerabilii','Roman',1862,99.99,4,3;
+EXEC sp_AdaugaCarte 'Crima si Pedeapsa','Roman',1866,110.00,5,4;
+
+Select * from Carte;
+-- Imprumuturi
+EXEC sp_AdaugaImprumut 1,1,'2026-02-01','2026-02-10';
+EXEC sp_AdaugaImprumut 2,2,'2026-02-05',NULL;
+EXEC sp_AdaugaImprumut 3,3,'2026-02-07','2026-02-20';
+EXEC sp_AdaugaImprumut 4,4,'2026-02-10',NULL;
+EXEC sp_AdaugaImprumut 5,5,'2026-02-15','2026-02-25';
+
+Select * from Imprumut;
+
+-- 6. INTEROGARI SI SUBINTEROGARI
+
+
+-- Afisare carti cu autor si editura
+SELECT C.titlu, A.nume + ' ' + A.prenume AS Autor,
+       E.denumire AS Editura, C.pret
+FROM Carte C
+JOIN Autor A ON C.id_autor = A.id_autor
+JOIN Editura E ON C.id_editura = E.id_editura;
+
+-- Carti cu pret peste media
+SELECT titlu, pret
+FROM Carte
+WHERE pret > (SELECT AVG(pret) FROM Carte);
+
+-- Total valoare carti
+SELECT SUM(pret) AS TotalValoareCarti
+FROM Carte;
+
+-- Subtotal pe gen
+SELECT gen, SUM(pret) AS TotalPeGen
+FROM Carte
+GROUP BY gen;
+
+-- Total imprumuturi per cititor
+SELECT C.nume_cititor, COUNT(I.id_imprumut) AS TotalImprumuturi
+FROM Cititor C
+LEFT JOIN Imprumut I ON C.id_cititor = I.id_cititor
+GROUP BY C.nume_cititor;
+
+-- Viziuni
+CREATE VIEW vw_CartiDetalii
+AS
+SELECT 
+    C.id_carte,
+    C.titlu,
+    C.gen,
+    C.an_publicare,
+    C.pret,
+    A.nume + ' ' + A.prenume AS Autor,
+    E.denumire AS Editura
+FROM Carte C
+JOIN Autor A ON C.id_autor = A.id_autor
+JOIN Editura E ON C.id_editura = E.id_editura;
+GO
+SELECT * FROM vw_CartiDetalii;
+---------------------------------
+
+
+CREATE VIEW vw_ImprumuturiActive
+AS
+SELECT 
+    I.id_imprumut,
+    C.titlu,
+    Ct.nume_cititor + ' ' + Ct.prenume AS Cititor,
+    I.data_imprumut
+FROM Imprumut I
+JOIN Carte C ON I.id_carte = C.id_carte
+JOIN Cititor Ct ON I.id_cititor = Ct.id_cititor
+WHERE I.data_returnare IS NULL;
+GO
+SELECT * FROM vw_ImprumuturiActive;
+------------------------
+CREATE VIEW vw_TotalImprumuturiCititor
+AS
+SELECT 
+    Ct.id_cititor,
+    Ct.nume_cititor,
+    Ct.prenume,
+    COUNT(I.id_imprumut) AS TotalImprumuturi
+FROM Cititor Ct
+LEFT JOIN Imprumut I ON Ct.id_cititor = I.id_cititor
+GROUP BY Ct.id_cititor, Ct.nume_cititor, Ct.prenume;
+GO
+
+CREATE VIEW vw_TotalValoarePeGen
+AS
+SELECT 
+    gen,
+    SUM(pret) AS TotalValoare
+FROM Carte
+GROUP BY gen;
+GO
+
+SELECT * FROM vw_TotalValoarePeGen;
+
+-- Inserări Autori
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Eminescu', 'Mihai', 'Romania', '1850-01-15');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Creanga', 'Ion', 'Romania', '1837-03-01');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Rowling', 'J.K.', 'UK', '1965-07-31');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Orwell', 'George', 'UK', '1903-06-25');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Hugo', 'Victor', 'Franta', '1802-02-26');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Dostoevski', 'Fiodor', 'Rusia', '1821-11-11');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Tolstoi', 'Lev', 'Rusia', '1828-09-09');
+INSERT INTO Autor VALUES (dbo.fn_GenerareIdAutor(), 'Shakespeare', 'William', 'Anglia', '1564-04-26');
+
+-- Verificare
+SELECT * FROM Autor;
